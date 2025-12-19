@@ -1,0 +1,89 @@
+name: Update RSS Feed
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create config.yaml from secret
+        run: |
+          cat << 'EOF' > config.yaml
+          ${{ vars.MATCHA_CONFIG_YAML }}
+          EOF
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Install Matcha
+        run: go install github.com/piqoni/matcha@generate_all
+
+      - name: Validate MATCHA_DB_KEY
+        run: |
+          if [ -z "${{ secrets.MATCHA_DB_KEY }}" ]; then
+            echo "ERROR: MATCHA_DB_KEY secret is not set!"
+            echo "Please add MATCHA_DB_KEY to your repository secrets because database will always be encrypted, regardless ."
+            exit 1
+          fi
+
+      - name: Decrypt database
+        run: |
+          if [ -f matcha.db.enc ]; then
+            openssl enc -aes-256-cbc -pbkdf2 \
+              -d -in matcha.db.enc \
+              -out matcha.db \
+              -pass pass:"${{ secrets.MATCHA_DB_KEY }}" || exit 1
+          fi
+
+      - name: Run Matcha with Custom Config
+        run: |
+          matcha -c config.yaml
+          matcha -c config.yaml --generate-all
+
+      - name: Build HTML content
+        run: |
+          go run build_content.go
+
+      - name: Remove plaintext markdown
+        run: rm -f pre-docs/*.md
+
+      - name: Encrypt database
+        run: |
+          openssl enc -aes-256-cbc -pbkdf2 \
+            -salt \
+            -in matcha.db \
+            -out matcha.db.enc \
+            -pass pass:"${{ secrets.MATCHA_DB_KEY }}" || exit 1
+          rm -f matcha.db
+
+      - name: Process Site (Encrypt or Copy)
+        shell: bash
+        env:
+          STATICRYPT_PASSWORD: ${{ secrets.STATICRYPT_PASSWORD }}
+        run: |
+          mkdir -p docs
+          if [ -n "$STATICRYPT_PASSWORD" ]; then
+            npm install -g staticrypt
+            staticrypt pre-docs/index.html -p "$STATICRYPT_PASSWORD" -d docs
+          else
+            cp pre-docs/index.html docs/index.html
+          fi
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 Update RSS feeds and DB state"
+          file_pattern: 'matcha.db.enc docs/*'
+          branch: main

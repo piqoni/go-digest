@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Digest</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar - Desktop Default */
+    #sidebar {
+      width: 260px;
+      border-right: 1px solid #ddd;
+      padding: 1rem;
+      overflow-y: auto;
+      background: #fafafa;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+
+    #content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    /* Toggle Button - Hidden on Desktop */
+    #mobile-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #333;
+      color: white;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 101;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Date list styling */
+    .date { cursor: pointer; padding: 0.5rem; border-radius: 4px; }
+    .date:hover { background: #eee; }
+    .date.active { background: #ddd; font-weight: 600; }
+
+    /* MOBILE STYLES */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%); /* Hide off-screen */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+      }
+
+      /* When sidebar has 'open' class, slide it in */
+      #sidebar.open {
+        transform: translateX(0);
+      }
+
+      #mobile-toggle {
+        display: flex; /* Show button on mobile */
+      }
+
+      #content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">📅</button>
+  <div id="sidebar">
+    <h3>Daily Digests</h3>
+    <div id="dates"></div>
+  </div>
+  <div id="content">
+    <h3>Article Title</h3>
+    <p>Select a date from the sidebar to read the digest.</p>
+  </div>
+  
+  <script type="application/json" id="digest-data">
+    {{.DigestsJSON}}
+  </script>
+  
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('open');
+      const btn = document.getElementById('mobile-toggle');
+      btn.innerText = sidebar.classList.contains('open') ? '✕' : '📅';
+    }
+
+    // Load digest data
+    const DIGESTS = JSON.parse(document.getElementById('digest-data').textContent);
+    
+    const datesEl = document.getElementById("dates");
+    const contentEl = document.getElementById("content");
+    const dates = Object.keys(DIGESTS).sort().reverse();
+
+    function selectDate(date, element, isInitial = false) {
+      document.querySelectorAll(".date").forEach(d => d.classList.remove("active"));
+      element.classList.add("active");
+      contentEl.innerHTML = DIGESTS[date];
+      contentEl.scrollTop = 0;
+      if (!isInitial && typeof toggleSidebar === "function" && window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar.classList.contains('open')) {
+          toggleSidebar();
+        }
+      }
+    }
+
+    dates.forEach((date, index) => {
+      const div = document.createElement("div");
+      div.textContent = date;
+      div.className = "date";
+      div.onclick = () => selectDate(date, div);
+      datesEl.appendChild(div);
+      if (index === 0) {
+        selectDate(date, div, true);
+      }
+    });
+  </script>
+</body>
+</html>
