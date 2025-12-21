@@ -1,12 +1,12 @@
 # Intro
 
+This repo shows how to use [Matcha](https://github.com/piqoni/matcha) and Github Pages/Actions to create your own news aggregator (either public or password-protected via [staticrypt](https://github.com/robinmoisson/staticrypt)).  
+
+Demo URL (Go programming related feeds): https://piqoni.github.io/go-digest
+
 <img width="718" height="807" alt="image" src="https://github.com/user-attachments/assets/c79be5d9-1df7-40f3-bb78-a164d50e2009" />
 
-This repo produces a daily digest about the Go Programming language. It uses [Matcha](https://github.com/piqoni/matcha) rss generator and Github Pages to host it.  
-
-This is here mainly to be used as a template so you can use it for your own feeds. It also supports password protected pages via [staticrypt](https://github.com/robinmoisson/staticrypt)
-
-# How to make your own 
+# How to make your own in less than 5 minutes
  
 ```
 git clone --depth 1 git@github.com:piqoni/go-digest my-personal-digest
