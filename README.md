@@ -54,6 +54,7 @@ feeds:
   - https://bitfieldconsulting.com/posts?format=rss
   - https://blog.boot.dev/golang/index.xml
   - https://antonz.org/tags/thank-go/index.xml
+  - https://mshibanami.github.io/GitHubTrendingRSS/weekly/go.xml
 google_news_keywords: golang
 markdown_dir_path: pre-docs
 ```
